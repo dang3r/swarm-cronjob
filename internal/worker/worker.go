@@ -31,8 +31,12 @@ func (c *Client) Run() {
 
 	log.Info().Msgf("Start %s (exit %d ; %s)", c.Job.Name, svcExitCode, svcStatus)
 
+  // If the service is replicated, only 1 replica is necessary
+  // If the service is global, a task is run on every node
 	serviceSpec := service.Spec
-	*serviceSpec.Mode.Replicated.Replicas = 1                    // Only 1 replica is necessary
+  if serviceSpec.Mode.Replicated != nil {
+	  *serviceSpec.Mode.Replicated.Replicas = 1
+  }
 	serviceSpec.TaskTemplate.ForceUpdate = service.Version.Index // Set ForceUpdate with Version to ensure update
 	_, err = c.Docker.ServiceUpdate(context.Background(), service.ID, service.Version, serviceSpec, types.ServiceUpdateOptions{})
 	if err != nil {
